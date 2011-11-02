@@ -1,11 +1,17 @@
 if ARGV[0] == "help"
-  puts "  Type: ruby juick-parser.rb <nick> <password> <pages>\n  Pages is optional.\n  Output file will be named `output.csv`."
+	puts "  Type: irb1.9.1 juick-parser.rb <nick> <password> <pages>\n  Pages is optional.\n  Output file will be named `output.csv`."
+	exit
+end
+
+if ARGV[0].nil?
+	puts "  Type irb1.9.1 juick-parser.rb help."
 	exit
 end
 
 
 require 'nokogiri'
-require 'open-uri
+require 'open-uri'
+require 'csv'
 
 
 login = ARGV[0]
@@ -30,6 +36,18 @@ end
 @texts = []
 @nums = []
 @page = 1
+
+
+
+def write_to_file
+	CSV.open("output.csv", "wb") do |row|
+		@nicks.count.times do |i|
+			row << [@nicks[i], @tags[i], @texts[i], @nums[i]]
+		end
+	end
+
+	exit
+end
 
 
 
@@ -84,10 +102,9 @@ def parse
 		@page += 1
 
 		if @page == @last_page
-		  puts "Done!"
-			exit
+			write_to_file
 		else
-		  parse
+			parse
 		end
 	end
 
