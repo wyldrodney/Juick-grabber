@@ -46,6 +46,7 @@ def write_to_file
 		end
 	end
 
+	system "rm -f juick-cookie"
 	exit
 end
 
@@ -54,8 +55,6 @@ end
 def parse
 
 	filename = '/tmp/juick-parser-' + srand.to_s
-
-	puts "Page: #{@page}"
 
 	system "curl -s -b juick-cookie -o #{filename} --get -d 'show=my' -d 'page=#{@page}'  http://juick.com/"
 
@@ -91,8 +90,6 @@ def parse
 		@texts << message.search(".msgtxt").children.to_s
 
 		@nums << message.search(".msgnum a").children.to_s
-
-		puts @nums.last
 	end
 
 	pagination = source.search("#content .page a").last
