@@ -22,7 +22,7 @@ end
 
 def parse(page)
 
-	filename = srand.to_s
+	filename = '/tmp/juick-parser-' + srand.to_s
 
 	system "curl -b juick-cookie -o #{filename} http://juick.com/?show=my&page=#{page}"
 	page = Nokogiri::HTML(open(filename), nil, 'UTF-8')
