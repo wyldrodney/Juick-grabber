@@ -17,40 +17,52 @@ else
 end
 
 
-filename = srand.to_s
-
-system "curl -b juick-cookie -o #{filename} http://juick.com/?show=my"
-
-page = Nokogiri::HTML(open(filename), nil, 'UTF-8')
-
-system "rm #{filename}"
+@nicks = @tags = @texts = @nums = []
 
 
-page.search("#content .liav .msg").each do |message|
+def parse(page)
 
-	nick = message.search("big a[1]").children.to_s
+	filename = srand.to_s
+
+	system "curl -b juick-cookie -o #{filename} http://juick.com/?show=my&page=#{page}"
+	page = Nokogiri::HTML(open(filename), nil, 'UTF-8')
+
+	system "rm #{filename}"
 
 
-	tag_hash = message.search("big a")
+	page.search("#content .liav .msg").each do |message|
 
-	if tag_hash.count > 1
-		tag_hash = tag_hash[1..-1]
-	else
-		tag_hash = []
+		@nicks << message.search("big a[1]").children.to_s
+
+
+		tag_hash = message.search("big a")
+
+		if tag_hash.count > 1
+			tag_hash = tag_hash[1..-1]
+		else
+			tag_hash = []
+		end
+
+
+		tags = []
+
+		tag_hash.each do |tag|
+			tags << tag.children.to_s.gsub(/^\*/, '')
+		end
+	
+		@tags << tags
+
+		@texts << message.search(".msgtxt").children.to_s
+
+		@nums << message.search(".msgnum a").children.to_s
 	end
 
-
-	tags = []
-
-	tag_hash.each do |tag|
-		tags << tag.children.to_s.gsub(/^\*/, '')
-	end
-
-
-	text = message.search(".msgtxt").children.to_s
-
-	puts "Nick: #{nick} Tags: #{tags} Text: #{text}"
 end
 
+#pagination = page.search("#content .page a").last
 
+
+parse(1)
+
+puts @nicks
 
