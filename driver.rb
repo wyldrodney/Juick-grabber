@@ -1,13 +1,15 @@
 require 'nokogiri'
 require 'open-uri'
 
-login = ARGV[0]
-password = ARGV[1]
+login = 'wyldrodney'
+#ARGV[0]
+password = 'Lf,k_"ynshghfqp'
+#ARGV[1]
 
 
 system "rm juick-cookie"
 
-system "curl -d 'nick=#{login}' -d 'passwd=#{password}' -c juick-cookie http://juick.com/login"
+system "curl -s -d 'nick=#{login}' -d 'passwd=#{password}' -c juick-cookie http://juick.com/login"
 
 if system 'ls juick-cookie'
 	puts "Authorized."
@@ -24,13 +26,15 @@ def parse(page)
 
 	filename = '/tmp/juick-parser-' + srand.to_s
 
-	system "curl -b juick-cookie -o #{filename} http://juick.com/?show=my&page=#{page}"
-	page = Nokogiri::HTML(open(filename), nil, 'UTF-8')
+	system 'curl -s -b juick-cookie -o ' + filename + ' http://juick.com/?show=my&page=' + page.to_s
+	sleep(2)
 
+	source = Nokogiri::HTML(open(filename), nil, 'UTF-8')
 	system "rm #{filename}"
 
+	source.search("#content .liav .msg").each do |message|
 
-	page.search("#content .liav .msg").each do |message|
+		puts "Message..."
 
 		@nicks << message.search("big a[1]").children.to_s
 
@@ -59,10 +63,7 @@ def parse(page)
 
 end
 
-#pagination = page.search("#content .page a").last
+parse(11)
 
-
-parse(1)
-
-puts @nicks
+#puts @nicks
 
