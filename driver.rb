@@ -23,13 +23,17 @@ end
 @tags = []
 @texts = []
 @nums = []
+@page = 1
+
 
 
 def parse(page)
 
 	filename = '/tmp/juick-parser-' + srand.to_s
 
-	system 'curl -s -b juick-cookie -o ' + filename + ' http://juick.com/?show=my&page=' + page.to_s
+	puts "Page: #{page}"
+
+	system "curl -s -b juick-cookie -o #{filename} --get -d 'show=my' -d 'page=#{page}'  http://juick.com/"
 
 	until system "ls #{filename}" do
 		sleep(1)
@@ -38,9 +42,8 @@ def parse(page)
 	source = Nokogiri::HTML(open(filename), nil, 'UTF-8')
 	system "rm -f #{filename}"
 
-	source.search("#content .liav .msg").each do |message|
 
-		puts "Message..."
+	source.search("#content .liav .msg").each do |message|
 
 		@nicks << message.search("big a[1]").children.to_s
 
@@ -58,16 +61,31 @@ def parse(page)
 		tag_hash.each do |tag|
 			tags << tag.children.to_s.gsub(/^\*/, '')
 		end
-	
+
 		@tags << tags
 
 		@texts << message.search(".msgtxt").children.to_s
 
 		@nums << message.search(".msgnum a").children.to_s
+
+		puts @nums.last
+	end
+
+	pagination = source.search("#content .page a").last
+
+	if pagination.children.to_s.index('Older')
+
+		page += 1
+
+		if page > 10
+		  puts "Done!"
+			exit
+		end
+
+		parse(page)
 	end
 
 end
 
-parse(11)
+parse(@page)
 
-puts @nicks
