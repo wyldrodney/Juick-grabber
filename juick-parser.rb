@@ -1,10 +1,16 @@
-require 'nokogiri'
-require 'open-uri'
+if ARGV[0] == "help"
+  puts "  Type: ruby juick-parser.rb <nick> <password> <pages>\n  Pages is optional.\n  Output file will be named `output.csv`."
+	exit
+end
 
-login = 'wyldrodney'
-#ARGV[0]
-password = 'Lf,k_"ynshghfqp'
-#ARGV[1]
+
+require 'nokogiri'
+require 'open-uri
+
+
+login = ARGV[0]
+password = ARGV[1]
+@last_page = ARGV[2].to_i + 1 || 0
 
 
 system "rm -f juick-cookie"
@@ -27,13 +33,13 @@ end
 
 
 
-def parse(page)
+def parse
 
 	filename = '/tmp/juick-parser-' + srand.to_s
 
-	puts "Page: #{page}"
+	puts "Page: #{@page}"
 
-	system "curl -s -b juick-cookie -o #{filename} --get -d 'show=my' -d 'page=#{page}'  http://juick.com/"
+	system "curl -s -b juick-cookie -o #{filename} --get -d 'show=my' -d 'page=#{@page}'  http://juick.com/"
 
 	until system "ls #{filename}" do
 		sleep(1)
@@ -75,17 +81,17 @@ def parse(page)
 
 	if pagination.children.to_s.index('Older')
 
-		page += 1
+		@page += 1
 
-		if page > 10
+		if @page == @last_page
 		  puts "Done!"
 			exit
+		else
+		  parse
 		end
-
-		parse(page)
 	end
 
 end
 
-parse(@page)
+parse
 
