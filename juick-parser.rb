@@ -1,29 +1,28 @@
-if ARGV[0] == "help"
-	puts "  Type: irb1.9.1 juick-parser.rb <nick> <password> <pages>\n  Pages is optional.\n  Output file will be named `output.csv`."
-	exit
-end
-
-if ARGV[0].nil?
-	puts "  Type irb1.9.1 juick-parser.rb help."
-	exit
-end
-
+#!/usr/bin/ruby
 
 require 'nokogiri'
 require 'open-uri'
 require 'csv'
+require 'shellwords'
 
 
-login = ARGV[0]
-password = ARGV[1]
-@last_page = ARGV[2].to_i + 1 || 0
+print "Enter login: "
+login = gets
+
+print "Enter password: "
+system "stty -echo"
+password = $stdin.gets.chomp
+system "stty echo"
+
+print "\nEnter pasges count (skip if you want all pages): "
+@last_page = gets.to_i || 0
 
 
-system "rm -f juick-cookie"
+system "rm -f juick-cookies*"
 
-system "curl -s -d 'nick=#{login}' -d 'passwd=#{password}' -c juick-cookie http://juick.com/login"
+system "wget -q --post-data='nick=#{login}&passwd=#{password}' --save-cookies=juick-cookies http://juick.com/login -O /dev/null"
 
-if system 'ls juick-cookie'
+if system 'ls juick-cookies'
 	puts "Authorized."
 else
 	puts "Auth failed."
@@ -46,7 +45,7 @@ def write_to_file
 		end
 	end
 
-	system "rm -f juick-cookie"
+	system "rm -f juick-cookies"
 	exit
 end
 
@@ -56,11 +55,7 @@ def parse
 
 	filename = '/tmp/juick-parser-' + srand.to_s
 
-	system "curl -s -b juick-cookie -o #{filename} --get -d 'show=my' -d 'page=#{@page}'  http://juick.com/"
-
-	until system "ls #{filename}" do
-		sleep(1)
-	end
+	system "wget -q --load-cookies=juick-cookies --post-data='show=my&page=#{@page}' -O #{filename} http://juick.com/"
 
 	source = Nokogiri::HTML(open(filename), nil, 'UTF-8')
 	system "rm -f #{filename}"
