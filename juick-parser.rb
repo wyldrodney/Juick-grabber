@@ -49,12 +49,20 @@ def write_to_file
 	@nicks.count.times do |i|
 		if @nicks[i].to_s.strip == @login.strip
 			@my_data += '"' + @nums[i] + '"; '
-			@tags[i].each {|t| @my_data += '"' + t.to_s + '"; '}
+
+      5.times do |c|
+			  tag = @tags[i][c].to_s || ''
+				@my_data += '"' + tag + '"; '
+			end
 			@my_data += '"' + @texts[i].to_s + '"' + "\n"
 		else
 			@rec_data += '"' + @nums[i] + '"; '
 			@rec_data += '"' + @nicks[i] + '"; '
-			@tags[i].each {|t| @rec_data += '"' + t.to_s + '"; '}
+
+			5.times do |c|
+				tag = @tags[i][c].to_s || ''
+				@rec_data += '"' + tag + '"; '
+			end
 			@rec_data += '"' + @texts[i].to_s + '"' + "\n"
 		end
 	end
