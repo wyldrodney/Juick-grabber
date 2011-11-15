@@ -7,20 +7,20 @@ require 'shellwords'
 
 
 print "Enter login: "
-login = gets
+@login = gets
 
 print "Enter password: "
 system "stty -echo"
 password = $stdin.gets.chomp
 system "stty echo"
 
-print "\nEnter pasges count (skip if you want all pages): "
-@last_page = gets.to_i || 0
+print "\nEnter pages count (skip if you want all pages): "
+@last_page = (gets.to_i + 1) || 0
 
 
 system "rm -f juick-cookies*"
 
-system "wget -q --post-data='nick=#{login}&passwd=#{password}' --save-cookies=juick-cookies http://juick.com/login -O /dev/null"
+system "wget -q --post-data='nick=#{@login}&passwd=#{password}' --save-cookies=juick-cookies http://juick.com/login -O /dev/null"
 
 if system 'ls juick-cookies'
 	puts "Authorized."
@@ -39,11 +39,31 @@ end
 
 
 def write_to_file
-	CSV.open("output.csv", "wb") do |row|
-		@nicks.count.times do |i|
-			row << [@nicks[i], @tags[i], @texts[i], @nums[i]]
+
+	@my = File.open("my.csv", "wb")
+	@my_data = ''
+
+	@rec = File.open("rec.csv", "wb")
+	@rec_data = ''
+
+	@nicks.count.times do |i|
+		if @nicks[i].to_s.strip == @login.strip
+			@my_data += '"' + @nums[i] + '"; '
+			@tags[i].each {|t| @my_data += '"' + t.to_s + '"; '}
+			@my_data += '"' + @texts[i].to_s + '"' + "\n"
+		else
+			@rec_data += '"' + @nums[i] + '"; '
+			@rec_data += '"' + @nicks[i] + '"; '
+			@tags[i].each {|t| @rec_data += '"' + t.to_s + '"; '}
+			@rec_data += '"' + @texts[i].to_s + '"' + "\n"
 		end
 	end
+
+	@my.write(@my_data)
+	@my.close
+
+	@rec.write(@rec_data)
+	@rec.close
 
 	system "rm -f juick-cookies"
 	exit
@@ -55,7 +75,7 @@ def parse
 
 	filename = '/tmp/juick-parser-' + srand.to_s
 
-	system "wget -q --load-cookies=juick-cookies --post-data='show=my&page=#{@page}' -O #{filename} http://juick.com/"
+	system "wget --load-cookies=juick-cookies -O #{filename} http://juick.com/#{@login.gsub(/\n/, '')}/?page=#{@page}"
 
 	source = Nokogiri::HTML(open(filename), nil, 'UTF-8')
 	system "rm -f #{filename}"
@@ -63,7 +83,7 @@ def parse
 
 	source.search("#content .liav .msg").each do |message|
 
-		@nicks << message.search("big a[1]").children.to_s
+		@nicks << message.search("big a[1]").children.to_s.sub('@', '')
 
 		tag_hash = message.search("big a")
 
@@ -82,7 +102,7 @@ def parse
 
 		@tags << tags
 
-		@texts << message.search(".msgtxt").children.to_s
+		@texts << message.search(".msgtxt").children.to_s.gsub(/['"]/, "'").gsub("<br>", "\n").gsub(";", ".")
 
 		@nums << message.search(".msgnum a").children.to_s
 	end
